@@ -1,105 +1,91 @@
-// Récupère la liste de courses depuis le localStorage (ou initialise un tableau vide)
-function getShoppingList() {
-  return JSON.parse(localStorage.getItem('shoppingList')) || [];
-}
+// Récupère la liste du panier depuis le localStorage (ou retourne un tableau vide)
+export const getShoppingList = () =>
+  JSON.parse(localStorage.getItem('shoppingList')) || [];
 
-// Sauvegarde la liste de courses dans le localStorage
-function setShoppingList(list) {
+// Sauvegarde la liste dans le localStorage
+export const setShoppingList = (list) =>
   localStorage.setItem('shoppingList', JSON.stringify(list));
-}
 
 // Calcule le total général de la liste
-function calculateTotal(list) {
-  return list.reduce((acc, item) => {
-    const quantity = parseInt(item.quantite_achetee, 10) || 1;
-    return acc + item.prix_unitaire * quantity;
-  }, 0);
-}
+export const calculateTotal = (list) =>
+  list.reduce(
+    (total, item) =>
+      total + item.prix_unitaire * (parseInt(item.quantite_achetee, 10) || 1),
+    0
+  );
 
-// Rendu du tableau de la liste de courses
-function renderCourseList() {
+// Génère le markup HTML pour le tableau de la liste de courses
+export const renderCourseList = () => {
   const shoppingList = getShoppingList();
   const tbody = document.getElementById('liste-course-body');
-  tbody.innerHTML = ''; // On vide le contenu précédent
 
-  shoppingList.forEach((item, index) => {
-    const tr = document.createElement('tr');
-    tr.className = "text-center";
+  tbody.innerHTML = shoppingList
+    .map((item, index) => {
+      const qty = parseInt(item.quantite_achetee, 10) || 1;
+      const sousTotal = item.prix_unitaire * qty;
+      return `
+        <tr class="text-center">
+          <td class="py-2 px-4 border">${item.nom}</td>
+          <td class="py-2 px-4 border">${item.prix_unitaire.toFixed(2)}</td>
+          <td class="py-2 px-4 border">
+            <input type="number" data-index="${index}" value="${qty}" min="1" class="w-16 border border-gray-300 rounded p-1"/>
+          </td>
+          <td class="py-2 px-4 border">${sousTotal.toFixed(2)}</td>
+          <td class="py-2 px-4 border">
+            <button data-delete="${index}" class="bg-red-500 hover:bg-red-600 text-white py-1 px-2 rounded">Supprimer</button>
+          </td>
+        </tr>
+      `;
+    })
+    .join('');
 
-    // Colonne Produit
-    const tdProduit = document.createElement('td');
-    tdProduit.className = "py-2 px-4 border";
-    tdProduit.textContent = item.nom;
-    tr.appendChild(tdProduit);
+  document.getElementById('total-general').textContent =
+    "Total: " + calculateTotal(shoppingList).toFixed(2) + " €";
+};
 
-    // Colonne Prix unitaire
-    const tdPU = document.createElement('td');
-    tdPU.className = "py-2 px-4 border";
-    tdPU.textContent = item.prix_unitaire.toFixed(2);
-    tr.appendChild(tdPU);
+// Lie les événements du tableau via la délégation
+export const bindCourseListEvents = () => {
+  const tbody = document.getElementById('liste-course-body');
 
-    // Colonne Quantité avec input
-    const tdQuantite = document.createElement('td');
-    tdQuantite.className = "py-2 px-4 border";
-    const inputQuantite = document.createElement('input');
-    inputQuantite.type = "number";
-    inputQuantite.min = "1";
-    inputQuantite.value = item.quantite_achetee || 1;
-    inputQuantite.className = "w-16 border border-gray-300 rounded p-1";
-    inputQuantite.setAttribute("data-index", index);
-    inputQuantite.addEventListener('change', (e) => {
+  // Gestion de la modification de quantité
+  tbody.addEventListener('change', (e) => {
+    if (e.target.matches('input[type="number"]')) {
+      const index = parseInt(e.target.getAttribute('data-index'), 10);
       const newQty = parseInt(e.target.value, 10);
       if (newQty < 1) {
         e.target.value = 1;
         return;
       }
-      shoppingList[index].quantite_achetee = newQty;
-      setShoppingList(shoppingList);
+      const list = getShoppingList();
+      list[index].quantite_achetee = newQty;
+      setShoppingList(list);
       renderCourseList();
-    });
-    tdQuantite.appendChild(inputQuantite);
-    tr.appendChild(tdQuantite);
-
-    // Colonne Sous-total
-    const tdSousTotal = document.createElement('td');
-    tdSousTotal.className = "py-2 px-4 border";
-    const sousTotal = item.prix_unitaire * (parseInt(item.quantite_achetee, 10) || 1);
-    tdSousTotal.textContent = sousTotal.toFixed(2);
-    tr.appendChild(tdSousTotal);
-
-    // Colonne Action avec bouton Supprimer
-    const tdAction = document.createElement('td');
-    tdAction.className = "py-2 px-4 border";
-    const btnSupprimer = document.createElement('button');
-    btnSupprimer.textContent = "Supprimer";
-    btnSupprimer.setAttribute("data-delete", index);
-    btnSupprimer.className = "bg-red-500 hover:bg-red-600 text-white py-1 px-2 rounded";
-    btnSupprimer.addEventListener('click', () => {
-      shoppingList.splice(index, 1);
-      setShoppingList(shoppingList);
-      renderCourseList();
-    });
-    tdAction.appendChild(btnSupprimer);
-    tr.appendChild(tdAction);
-
-    tbody.appendChild(tr);
+    }
   });
 
-  // Mise à jour du total général
-  const total = calculateTotal(shoppingList);
-  document.getElementById('total-general').textContent = `Total: ${total.toFixed(2)} €`;
-}
+  // Gestion du clic sur le bouton Supprimer
+  tbody.addEventListener('click', (e) => {
+    const btn = e.target.closest('button[data-delete]');
+    if (btn) {
+      const index = parseInt(btn.getAttribute('data-delete'), 10);
+      const list = getShoppingList();
+      list.splice(index, 1);
+      setShoppingList(list);
+      renderCourseList();
+    }
+  });
 
-// Gestion du bouton "Vider la liste"
-document.getElementById('vider-liste').addEventListener('click', () => {
-  if (confirm("Voulez-vous vraiment vider la liste de courses ?")) {
-    setShoppingList([]);
-    renderCourseList();
-  }
+  // Bouton pour vider la liste
+  document.getElementById('vider-liste').addEventListener('click', () => {
+    if (confirm("Voulez-vous vraiment vider la liste de courses ?")) {
+      setShoppingList([]);
+      renderCourseList();
+    }
+  });
+};
+
+// Initialisation lors du chargement de la page
+document.addEventListener('DOMContentLoaded', () => {
+  renderCourseList();
+  bindCourseListEvents();
 });
-
-// Initialisation du rendu lors du chargement de la page
-document.addEventListener('DOMContentLoaded', renderCourseList);
-
-// Export des fonctions pour faciliter les tests unitaires, si nécessaire
-export { getShoppingList, setShoppingList, calculateTotal, renderCourseList };
