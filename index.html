@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Course App - Produits Disponibles</title>
+  <!-- Inclusion du CSS compilé par Tailwind -->
+  <link href="./dist/output.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100">
+  <!-- Barre de navigation -->
+  <nav class="flex justify-end items-center p-4 bg-white shadow">
+    <a href="./index.html" class="mr-4 text-gray-700 hover:text-gray-900">Produits disponibles</a>
+    <a href="./liste.html" class="text-gray-700 hover:text-gray-900">Ma liste de courses</a>
+  </nav>
+
+  <!-- Contenu principal -->
+  <main class="max-w-7xl mx-auto p-4">
+    <!-- Barre de recherche -->
+    <div class="flex items-center mb-6">
+      <input 
+        type="text" 
+        placeholder="Rechercher..." 
+        class="border border-gray-300 rounded-l px-4 py-2 w-1/2 focus:outline-none"
+      />
+      <button class="bg-blue-500 text-white px-4 py-2 rounded-r hover:bg-blue-600">
+        Rechercher
+      </button>
+    </div>
+
+    <!-- Titre -->
+    <h1 class="text-2xl font-bold mb-4">
+      Produits disponibles <span class="text-sm text-gray-500">(total de XXX)</span>
+    </h1>
+
+    <!-- Conteneur en grille (4 colonnes) -->
+    <div id="produits" class="grid grid-cols-4 gap-4">
+      <!-- Les cartes produits seront injectées ici par main.js -->
+    </div>
+  </main>
+
+  <!-- Script principal -->
+  <script type="module" src="./src/main.js"></script>
+</body>
+</html>
